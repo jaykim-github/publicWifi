@@ -7,19 +7,21 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-public class WifiService {
-	public String getWifiInfo() throws IOException {
+
+public class ApiExplorer {
+	public static void main(String[] args) throws IOException {
 		StringBuilder urlBuilder = new StringBuilder("http://openapi.seoul.go.kr:8088");
 		urlBuilder.append("/" + URLEncoder.encode("4462734865646d623130327563504b5a", "UTF-8"));
 		urlBuilder.append("/" + URLEncoder.encode("json", "UTF-8"));
 		urlBuilder.append("/" + URLEncoder.encode("TbPublicWifiInfo", "UTF-8"));
 		urlBuilder.append("/" + URLEncoder.encode("1", "UTF-8"));
-		urlBuilder.append("/" + URLEncoder.encode("5", "UTF-8"));
+		urlBuilder.append("/" + URLEncoder.encode("1000", "UTF-8"));
 		//urlBuilder.append("/" + URLEncoder.encode("20220301", "UTF-8"));
 		URL url = new URL(urlBuilder.toString());
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -36,8 +38,12 @@ public class WifiService {
 		}
 		StringBuilder sb = new StringBuilder();
 		
-		while(rd.ready()) {
-			sb.append(rd.readLine());
+//		while(rd.ready()) {
+//			sb.append(rd.readLine());
+//		}
+		String line;
+		while ((line = rd.readLine()) != null) {
+			sb.append(line);
 		}
 		
 		rd.close();
@@ -46,11 +52,6 @@ public class WifiService {
 		
 		String result = sb.toString();
 		
-		return result;	
-	}
-	
-	
-	public int parseJson(String result) {
 		
     	try {
     		JSONParser jsonParser = new JSONParser();
@@ -70,7 +71,6 @@ public class WifiService {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-		
-		return 1;
+
 	}
 }
