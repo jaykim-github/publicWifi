@@ -21,32 +21,38 @@ public class ApiExplorer {
 
 	public static void main(String[] args) throws IOException {
 		// 연결 후 최대값 가져오기
-//		int maxNum = ae.getWifiMaxNum();
-//		System.out.println(maxNum);
-//		int start = 1;
-//		int end = 0;
-//
-//		while (maxNum > 1000) {
-//
-//			if (maxNum > 1000) {
-//				end = end + 1000;
-//				maxNum = maxNum - 1000;
-//			} else {
-//				end = maxNum;
-//			}
-//			// 여기서 db에 저장
-//			System.out.println(start + " " + end);
-//			System.out.println();
-//
-//			// start 초기화
-//			start = end + 1;
-//		}
-//		maxNum = maxNum + start;
-//		System.out.println(start + " " + maxNum);
-//		System.out.println();
-		ae.connectDB();
-		String result = ae.getWifiInfo(1, 1);
+		int maxNum = ae.getWifiMaxNum();
+		System.out.println(maxNum);
+		int start = 1;
+		int end = 0;
+		String result = "";
+
+		while (maxNum > 1000) {
+
+			if (maxNum > 1000) {
+				end = end + 1000;
+				maxNum = maxNum - 1000;
+			} else {
+				end = maxNum;
+			}
+			// 여기서 db에 저장
+			
+			result = ae.getWifiInfo(start, end);
+			ae.insertDB(result);
+			System.out.println(start + " " + end);
+			System.out.println();
+
+			// start 초기화
+			start = end + 1;
+		}
+		maxNum = maxNum + start;
+		result = ae.getWifiInfo(start, maxNum);
 		ae.insertDB(result);
+		System.out.println(start + " " + maxNum);
+		System.out.println();
+		//ae.connectDB();
+		
+		
 	}
 
 	// start to end 가져오기
@@ -162,15 +168,15 @@ public class ApiExplorer {
 				String WORK_DTTM = (String) rowData.get("WORK_DTTM	");
 				String X_SWIFI_INOUT_DOOR = (String) rowData.get("X_SWIFI_INOUT_DOOR");
 
-//				sql = "INSERT INTO wifiInfo (X_SWIFI_MGR_NO,X_SWIFI_WRDOFC,X_SWIFI_MAIN_NM,X_SWIFI_ADRES1,X_SWIFI_ADRES2,X_SWIFI_INSTL_FLOOR,X_SWIFI_INSTL_TY,X_SWIFI_INSTL_MBY,X_SWIFI_SVC_SE,X_SWIFI_CMCWR,X_SWIFI_CNSTC_YEAR,X_SWIFI_INOUT_DOOR,X_SWIFI_REMARS3,LAT,LNT,WORK_DTTM ) values (' "
-//						+ X_SWIFI_MGR_NO + "', '" + X_SWIFI_WRDOFC + "', '" + X_SWIFI_MAIN_NM + "', '" + X_SWIFI_ADRES1
-//						+ "', '" + X_SWIFI_ADRES2 + "', '" + X_SWIFI_INSTL_FLOOR + "', '" + X_SWIFI_INSTL_TY + "', '"
-//						+ X_SWIFI_INSTL_MBY + "', '" + X_SWIFI_SVC_SE + "', '" + X_SWIFI_CMCWR + "', '"
-//						+ X_SWIFI_CNSTC_YEAR + "', '" + X_SWIFI_INOUT_DOOR + "', '" + X_SWIFI_REMARS3 + "', '" + LAT
-//						+ "', '" + LNT + "', '" + WORK_DTTM + "')";
-//				//System.out.println(sql);
-//				System.out.println();
-//				stmt.executeUpdate(sql);
+				sql = "INSERT INTO wifiInfo (X_SWIFI_MGR_NO,X_SWIFI_WRDOFC,X_SWIFI_MAIN_NM,X_SWIFI_ADRES1,X_SWIFI_ADRES2,X_SWIFI_INSTL_FLOOR,X_SWIFI_INSTL_TY,X_SWIFI_INSTL_MBY,X_SWIFI_SVC_SE,X_SWIFI_CMCWR,X_SWIFI_CNSTC_YEAR,X_SWIFI_INOUT_DOOR,X_SWIFI_REMARS3,LAT,LNT,WORK_DTTM ) values (' "
+						+ X_SWIFI_MGR_NO + "', '" + X_SWIFI_WRDOFC + "', '" + X_SWIFI_MAIN_NM + "', '" + X_SWIFI_ADRES1
+						+ "', '" + X_SWIFI_ADRES2 + "', '" + X_SWIFI_INSTL_FLOOR + "', '" + X_SWIFI_INSTL_TY + "', '"
+						+ X_SWIFI_INSTL_MBY + "', '" + X_SWIFI_SVC_SE + "', '" + X_SWIFI_CMCWR + "', '"
+						+ X_SWIFI_CNSTC_YEAR + "', '" + X_SWIFI_INOUT_DOOR + "', '" + X_SWIFI_REMARS3 + "', '" + LAT
+						+ "', '" + LNT + "', '" + WORK_DTTM + "')";
+				//System.out.println(sql);
+				System.out.println();
+				stmt.executeUpdate(sql);
 				rs = stmt.executeQuery( "select * from wifiInfo" );
 				
 				System.out.println(rs.getString("X_SWIFI_MGR_NO"));

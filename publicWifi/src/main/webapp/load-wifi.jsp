@@ -8,5 +8,7 @@
 </head>
 <body>
 WIFI 정보를 가져와볼까요~?
+<br>
+<a href="index.jsp">홈으로 가기</a>
 </body>
 </html>
