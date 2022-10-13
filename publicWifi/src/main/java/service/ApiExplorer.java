@@ -20,6 +20,8 @@ public class ApiExplorer {
 	static ApiExplorer ae = new ApiExplorer();
 
 	public static void main(String[] args) throws IOException {
+		ae.connectDB();
+		
 		// 연결 후 최대값 가져오기
 		int maxNum = ae.getWifiMaxNum();
 		System.out.println(maxNum);
@@ -47,10 +49,11 @@ public class ApiExplorer {
 		}
 		maxNum = maxNum + start;
 		result = ae.getWifiInfo(start, maxNum);
+//		result = ae.getWifiInfo(11679, 11680);
 		ae.insertDB(result);
 		System.out.println(start + " " + maxNum);
 		System.out.println();
-		//ae.connectDB();
+		
 		
 		
 	}
@@ -115,9 +118,41 @@ public class ApiExplorer {
 	// DB 연결 ...? 이게 필요한지 의문 어쩄든
 	public static void connectDB() {
 		Connection c = null;
+		Statement stmt = null;
+		
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.db");
+			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.sqlite");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+			stmt = c.createStatement();
+			
+			String sql = 				"CREATE TABLE 'wifiInfo' (\r\n"
+					+ "	'X_SWIFI_MGR_NO' 	TEXT,\r\n"
+					+ "	'X_SWIFI_WRDOFC' 	TEXT,\r\n"
+					+ "	'X_SWIFI_MAIN_NM'	TEXT,\r\n"
+					+ "	'X_SWIFI_ADRES1'	TEXT,\r\n"
+					+ "	'X_SWIFI_ADRES2'	TEXT,\r\n"
+					+ "	'X_SWIFI_INSTL_FLOOR'	TEXT,\r\n"
+					+ "	'X_SWIFI_INSTL_TY' 	TEXT,\r\n"
+					+ "	'X_SWIFI_INSTL_MBY'	TEXT,\r\n"
+					+ "	'X_SWIFI_SVC_SE'	TEXT,\r\n"
+					+ "	'X_SWIFI_CMCWR'	TEXT,\r\n"
+					+ "	'X_SWIFI_CNSTC_YEAR'	TEXT,\r\n"
+					+ "	'X_SWIFI_INOUT_DOOR'	TEXT,\r\n"
+					+ "	'X_SWIFI_REMARS3'	TEXT,\r\n"
+					+ "	'LAT'	REAL,\r\n"
+					+ "	'LNT'	REAL,\r\n"
+					+ "	'WORK_DTTM'	TEXT,\r\n"
+					+ "	PRIMARY KEY('X_SWIFI_MGR_NO')\r\n"
+					+ ")";
+			
+			stmt.executeUpdate(sql);
+			
+			stmt.close();
+			c.commit();
+			c.close();
+			
 		} catch (Exception e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			System.exit(0);
@@ -130,11 +165,11 @@ public class ApiExplorer {
 		Connection c = null;
 		Statement stmt = null;
 		ResultSet rs = null;
-		
+		String str = "";
 		try {
 			// DB 연결
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.db");
+			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.sqlite");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 
@@ -146,16 +181,19 @@ public class ApiExplorer {
 			JSONObject tbpublicWifiInfo = (JSONObject) jsonObject.get("TbPublicWifiInfo");
 			JSONArray publicwifiInfo = (JSONArray) tbpublicWifiInfo.get("row");
 
-			String str = "";
+			
 			String sql = "";
 			for (int i = 0; i < publicwifiInfo.size(); i++) {
 				JSONObject rowData = (JSONObject) publicwifiInfo.get(i);
 
 				String X_SWIFI_MGR_NO = (String) rowData.get("X_SWIFI_MGR_NO");
+				X_SWIFI_MGR_NO = X_SWIFI_MGR_NO.trim();
 				String X_SWIFI_WRDOFC = (String) rowData.get("X_SWIFI_WRDOFC");
 				String X_SWIFI_MAIN_NM = (String) rowData.get("X_SWIFI_MAIN_NM");
 				String X_SWIFI_ADRES1 = (String) rowData.get("X_SWIFI_ADRES1");
+				X_SWIFI_ADRES1 = X_SWIFI_ADRES1.replaceAll("\'","");
 				String X_SWIFI_ADRES2 = (String) rowData.get("X_SWIFI_ADRES2");
+				X_SWIFI_ADRES2 = X_SWIFI_ADRES2.replaceAll("\'","");
 				String X_SWIFI_INSTL_FLOOR = (String) rowData.get("X_SWIFI_INSTL_FLOOR");
 				String X_SWIFI_INSTL_TY = (String) rowData.get("X_SWIFI_INSTL_TY");
 				String X_SWIFI_INSTL_MBY = (String) rowData.get("X_SWIFI_INSTL_MBY");
@@ -165,34 +203,49 @@ public class ApiExplorer {
 				String X_SWIFI_REMARS3 = (String) rowData.get("X_SWIFI_REMARS3");
 				String LAT = (String) rowData.get("LAT");
 				String LNT = (String) rowData.get("LNT");
-				String WORK_DTTM = (String) rowData.get("WORK_DTTM	");
+				String WORK_DTTM = (String) rowData.get("WORK_DTTM");
 				String X_SWIFI_INOUT_DOOR = (String) rowData.get("X_SWIFI_INOUT_DOOR");
 
-				sql = "INSERT INTO wifiInfo (X_SWIFI_MGR_NO,X_SWIFI_WRDOFC,X_SWIFI_MAIN_NM,X_SWIFI_ADRES1,X_SWIFI_ADRES2,X_SWIFI_INSTL_FLOOR,X_SWIFI_INSTL_TY,X_SWIFI_INSTL_MBY,X_SWIFI_SVC_SE,X_SWIFI_CMCWR,X_SWIFI_CNSTC_YEAR,X_SWIFI_INOUT_DOOR,X_SWIFI_REMARS3,LAT,LNT,WORK_DTTM ) values (' "
+				sql = "INSERT INTO wifiInfo values (' "
 						+ X_SWIFI_MGR_NO + "', '" + X_SWIFI_WRDOFC + "', '" + X_SWIFI_MAIN_NM + "', '" + X_SWIFI_ADRES1
 						+ "', '" + X_SWIFI_ADRES2 + "', '" + X_SWIFI_INSTL_FLOOR + "', '" + X_SWIFI_INSTL_TY + "', '"
 						+ X_SWIFI_INSTL_MBY + "', '" + X_SWIFI_SVC_SE + "', '" + X_SWIFI_CMCWR + "', '"
 						+ X_SWIFI_CNSTC_YEAR + "', '" + X_SWIFI_INOUT_DOOR + "', '" + X_SWIFI_REMARS3 + "', '" + LAT
 						+ "', '" + LNT + "', '" + WORK_DTTM + "')";
-				//System.out.println(sql);
-				System.out.println();
+//				System.out.println(sql);
+//				System.out.println();
 				stmt.executeUpdate(sql);
-				rs = stmt.executeQuery( "select * from wifiInfo" );
 				
-				System.out.println(rs.getString("X_SWIFI_MGR_NO"));
-				System.out.println();
+			
+				
 				
 			}
+			
+			System.out.println();
+			rs = stmt.executeQuery( "select count(*) from wifiInfo" );
+			System.out.println(rs.getString("count(*)"));
+			str = rs.getString("count(*)");
+			
+			
 			rs.close();
 			stmt.close();
 			c.commit();
 			c.close();
-			System.out.print(sql);
+			System.out.print(str);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-		return 1;
+		
+		 
+		return Integer.parseInt(str);
+	}
+	
+	
+	public String getDistance(int start, int end) throws IOException {
+		
+		
+		return "";
+		
 	}
 }
