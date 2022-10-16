@@ -10,6 +10,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.LocalDateTime;
+import java.sql.PreparedStatement;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -20,41 +22,43 @@ public class ApiExplorer {
 	static ApiExplorer ae = new ApiExplorer();
 
 	public static void main(String[] args) throws IOException {
-		ae.connectDB();
-		
-		// 연결 후 최대값 가져오기
-		int maxNum = ae.getWifiMaxNum();
-		System.out.println(maxNum);
-		int start = 1;
-		int end = 0;
-		String result = "";
-
-		while (maxNum > 1000) {
-
-			if (maxNum > 1000) {
-				end = end + 1000;
-				maxNum = maxNum - 1000;
-			} else {
-				end = maxNum;
-			}
-			// 여기서 db에 저장
-			
-			result = ae.getWifiInfo(start, end);
-			ae.insertDB(result);
-			System.out.println(start + " " + end);
-			System.out.println();
-
-			// start 초기화
-			start = end + 1;
-		}
-		maxNum = maxNum + start;
-		result = ae.getWifiInfo(start, maxNum);
-//		result = ae.getWifiInfo(11679, 11680);
-		ae.insertDB(result);
-		System.out.println(start + " " + maxNum);
-		System.out.println();
-		
-		
+//		ae.createDB();
+//		
+//		// 연결 후 최대값 가져오기
+//		int maxNum = ae.getWifiMaxNum();
+//		System.out.println(maxNum);
+//		int start = 1;
+//		int end = 0;
+//		String result = "";
+//
+//		while (maxNum > 1000) {
+//
+//			if (maxNum > 1000) {
+//				end = end + 1000;
+//				maxNum = maxNum - 1000;
+//			} else {
+//				end = maxNum;
+//			}
+//			// 여기서 db에 저장
+//			
+//			result = ae.getWifiInfo(start, end);
+//			ae.insertDB(result);
+//			System.out.println(start + " " + end);
+//			System.out.println();
+//
+//			// start 초기화
+//			start = end + 1;
+//		}
+//		maxNum = maxNum + start;
+//		result = ae.getWifiInfo(start, maxNum);
+////		result = ae.getWifiInfo(11679, 11680);
+//		ae.insertDB(result);
+//		System.out.println(start + " " + maxNum);
+//		System.out.println();
+//		ae.createHisDB();
+//		ae.insertDistance(37.4901,126.9426);
+//		ae.insertHisDB(37.4901,126.9426);
+		ae.deleteDB(1);
 		
 	}
 
@@ -66,7 +70,6 @@ public class ApiExplorer {
 		urlBuilder.append("/" + URLEncoder.encode("TbPublicWifiInfo", "UTF-8"));
 		urlBuilder.append("/" + URLEncoder.encode(Integer.toString(start), "UTF-8"));
 		urlBuilder.append("/" + URLEncoder.encode(Integer.toString(end), "UTF-8"));
-		// urlBuilder.append("/" + URLEncoder.encode("20220301", "UTF-8"));
 		URL url = new URL(urlBuilder.toString());
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("GET");
@@ -74,7 +77,6 @@ public class ApiExplorer {
 		conn.setDoOutput(true);
 		System.out.println("Response code: " + conn.getResponseCode());
 		BufferedReader rd;
-// 서비스코드가 정상이면 200~300사이의 숫자가 나옵니다.
 		if (conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300) {
 			rd = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
 		} else {
@@ -116,18 +118,18 @@ public class ApiExplorer {
 	}
 
 	// DB 연결 ...? 이게 필요한지 의문 어쩄든
-	public static void connectDB() {
+	public static void createDB() {
 		Connection c = null;
 		Statement stmt = null;
 		
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.sqlite");
+			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.db");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 			stmt = c.createStatement();
 			
-			String sql = 				"CREATE TABLE 'wifiInfo' (\r\n"
+			String sql = "CREATE TABLE 'wifiInfo' (\r\n"
 					+ "	'X_SWIFI_MGR_NO' 	TEXT,\r\n"
 					+ "	'X_SWIFI_WRDOFC' 	TEXT,\r\n"
 					+ "	'X_SWIFI_MAIN_NM'	TEXT,\r\n"
@@ -144,6 +146,7 @@ public class ApiExplorer {
 					+ "	'LAT'	REAL,\r\n"
 					+ "	'LNT'	REAL,\r\n"
 					+ "	'WORK_DTTM'	TEXT,\r\n"
+					+ "	'DISTANCE'	REAL,\r\n"
 					+ "	PRIMARY KEY('X_SWIFI_MGR_NO')\r\n"
 					+ ")";
 			
@@ -169,7 +172,7 @@ public class ApiExplorer {
 		try {
 			// DB 연결
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.sqlite");
+			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.db");
 			c.setAutoCommit(false);
 			System.out.println("Opened database successfully");
 
@@ -205,19 +208,16 @@ public class ApiExplorer {
 				String LNT = (String) rowData.get("LNT");
 				String WORK_DTTM = (String) rowData.get("WORK_DTTM");
 				String X_SWIFI_INOUT_DOOR = (String) rowData.get("X_SWIFI_INOUT_DOOR");
+				String DISTANCE = "";
 
 				sql = "INSERT INTO wifiInfo values (' "
 						+ X_SWIFI_MGR_NO + "', '" + X_SWIFI_WRDOFC + "', '" + X_SWIFI_MAIN_NM + "', '" + X_SWIFI_ADRES1
 						+ "', '" + X_SWIFI_ADRES2 + "', '" + X_SWIFI_INSTL_FLOOR + "', '" + X_SWIFI_INSTL_TY + "', '"
 						+ X_SWIFI_INSTL_MBY + "', '" + X_SWIFI_SVC_SE + "', '" + X_SWIFI_CMCWR + "', '"
 						+ X_SWIFI_CNSTC_YEAR + "', '" + X_SWIFI_INOUT_DOOR + "', '" + X_SWIFI_REMARS3 + "', '" + LAT
-						+ "', '" + LNT + "', '" + WORK_DTTM + "')";
-//				System.out.println(sql);
-//				System.out.println();
-				stmt.executeUpdate(sql);
-				
-			
-				
+						+ "', '" + LNT + "', '" + WORK_DTTM+ "', '" + DISTANCE + "')";
+
+				stmt.executeUpdate(sql);			
 				
 			}
 			
@@ -242,10 +242,173 @@ public class ApiExplorer {
 	}
 	
 	
-	public String getDistance(int start, int end) throws IOException {
+	public String insertDistance(double lat, double lnt) throws IOException {
+		Connection c = null;
+		Statement stmt = null;
+		ResultSet rs = null;
+		String sql = "";	
+		String s = "";
+		
+		int count = 0;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+				
+			stmt = c.createStatement();
+			System.out.println();
+			PreparedStatement ps = c.prepareStatement("SELECT X_SWIFI_MGR_NO,LAT,LNT from wifiInfo");
+			rs = ps.executeQuery();
+			
+			
+			
+			while(rs.next()) {
+				String X_SWIFI_MGR_NO = rs.getString("X_SWIFI_MGR_NO");
+				double LAT = rs.getDouble("LAT");
+				double LNT = rs.getDouble("LNT");
+								
+				double d = ae.getDistance(lat,lnt,LAT,LNT);
+				
+				sql = "UPDATE wifiInfo set distance = ' "
+						+ d + "' where X_SWIFI_MGR_NO = '" + X_SWIFI_MGR_NO + "'";
+				
+				stmt.executeUpdate(sql);
+				count++;
+			}
+			System.out.println(count);
+			
+			
+			ResultSet res = null;
+			PreparedStatement pst = c.prepareStatement("select * from wifiInfo order by DISTANCE LIMIT 20");
+			res = pst.executeQuery();
+			
+		
+			while(res.next()) {
+				s += res.getString(1) + " ";
+			}
+			
+			System.out.println(s);
+						
+			rs.close();
+			stmt.close();
+			c.commit();
+			c.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 		
-		return "";
+		return s;
 		
 	}
+	
+	public  double getDistance(double lat1, double lon1, double lat2, double lon2) {
+		  double dLat = Math.toRadians(lat2 - lat1);
+		  double dLon = Math.toRadians(lon2 - lon1);
+
+		  double a = Math.sin(dLat/2)* Math.sin(dLat/2)+ Math.cos(Math.toRadians(lat1))* Math.cos(Math.toRadians(lat2))* Math.sin(dLon/2)* Math.sin(dLon/2);
+		  double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+		  double d = 6357* c * 1000;    // Distance in m
+		  return d;
+		}
+	
+	public static void createHisDB() {
+		Connection c = null;
+		Statement stmt = null;
+		
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+			stmt = c.createStatement();
+			
+			String sql = "CREATE TABLE 'wifi_his' (\r\n"
+					+ "	'ID'	INTEGER,\r\n"
+					+ "	'LAT'	REAL,\r\n"
+					+ "	'LNT'	REAL,\r\n"
+					+ "	'WORK_DTTM'	TEXT,\r\n"
+					+ "	'USEYN'	TEXT,\r\n"
+					+ "	PRIMARY KEY('ID')\r\n"
+					+ ");";
+			
+			stmt.executeUpdate(sql);
+			
+			stmt.close();
+			c.commit();
+			c.close();
+			
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+		
+	}
+	
+	
+	public void insertHisDB(double lat, double lnt) {
+		Connection c = null;
+		Statement stmt = null;
+		
+		LocalDateTime now = LocalDateTime.now();
+		String sql = "";
+		try {
+			// DB 연결
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+			
+			stmt = c.createStatement();
+			
+			ResultSet res = null;
+			PreparedStatement pst = c.prepareStatement("select count(ID) from wifi_his");
+			res = pst.executeQuery();
+			
+			int id = res.getInt("count(ID)");
+			System.out.println(id); 
+			id++;
+			
+			sql = "INSERT INTO wifi_his values('"+ id + "', '" + lat + "', '" + lnt + "', '" + now + "', 'Y')";
+
+			stmt.executeUpdate(sql);					
+			stmt.close();
+			c.commit();
+			c.close();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void deleteDB(int id) {
+		Connection c = null;
+		Statement stmt = null;
+		
+		String sql = "";
+		try {
+			// DB 연결
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+			
+			stmt = c.createStatement();
+			
+			ResultSet res = null;
+			
+			sql = "UPDATE wifi_his set USEYN = 'N'";
+
+			stmt.executeUpdate(sql);					
+			stmt.close();
+			c.commit();
+			c.close();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 }
