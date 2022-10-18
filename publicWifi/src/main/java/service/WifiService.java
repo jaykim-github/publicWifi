@@ -186,7 +186,7 @@ public class WifiService {
 			// DB 연결
 			Class.forName("org.sqlite.JDBC");
 			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.db");
-			c.setAutoCommit(false);
+			c.setAutoCommit(true);
 			System.out.println("Opened database successfully");
 
 			stmt = c.createStatement();
@@ -230,7 +230,8 @@ public class WifiService {
 						+ X_SWIFI_CNSTC_YEAR + "', '" + X_SWIFI_INOUT_DOOR + "', '" + X_SWIFI_REMARS3 + "', '" + LAT
 						+ "', '" + LNT + "', '" + WORK_DTTM+ "', '" + DISTANCE + "')";
 
-				stmt.executeUpdate(sql);			
+				stmt.executeUpdate(sql);
+				//System.out.println(sql);
 				
 			}
 			
@@ -335,7 +336,6 @@ public class WifiService {
 		
 		
 		return wifiList;
-		
 	}
 	
 	public  double getDistance(double lat1, double lon1, double lat2, double lon2) {
@@ -344,8 +344,9 @@ public class WifiService {
 
 		  double a = Math.sin(dLat/2)* Math.sin(dLat/2)+ Math.cos(Math.toRadians(lat1))* Math.cos(Math.toRadians(lat2))* Math.sin(dLon/2)* Math.sin(dLon/2);
 		  double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-		  double d = 6357* c * 1000;    // Distance in m
-		  return d;
+		  double d = 6357* c ;    // Distance in km
+		  double dd = Double.parseDouble(String.format("%.2f",d));
+		  return dd;
 		}
 	
 	public static void createHisDB() {
@@ -441,6 +442,55 @@ public class WifiService {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public List<WifiInfo> historylist() throws IOException{
+		List<WifiInfo> wifiList = new ArrayList<>();
+		
+		Connection c = null;
+		Statement stmt = null;
+		ResultSet rs = null;
+		String sql = "";	
+		String s = "";
+		
+		int count = 0;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:publicWifi.db");
+			c.setAutoCommit(false);
+			System.out.println("Opened database successfully");
+				
+			stmt = c.createStatement();
+			System.out.println();
+
+			ResultSet res = null;
+			PreparedStatement pst = c.prepareStatement("SELECT ID,LAT,LNT,WORK_DTTM from wifi_his order by id desc");
+			res = pst.executeQuery();
+			
+		
+			while(res.next()) {
+				WifiInfo wi = new WifiInfo();
+				wi.setID(res.getInt("ID"));
+				wi.setLAT(res.getDouble("LAT"));
+				wi.setLNT(res.getDouble("LNT"));
+				wi.setWORK_DTTM(res.getString("WORK_DTTM"));
+				
+				wifiList.add(wi);
+			}
+			
+			System.out.println(s);
+						
+			res.close();
+			stmt.close();
+			c.commit();
+			c.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+		return wifiList;
 	}
 	
 }

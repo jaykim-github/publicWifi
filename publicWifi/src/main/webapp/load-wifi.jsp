@@ -8,12 +8,11 @@
 <title>Insert title here</title>
 </head>
 <body>
-<b><center>
 <% 
 	WifiService ae = new WifiService();
-	
+	//ae.init();
 	int maxNum = ae.getWifiMaxNum();
-	out.print(maxNum);
+
 	int start = 1;
 	int end = 0;
 	String result = "";
@@ -35,7 +34,9 @@
 	result = ae.getWifiInfo(start, maxNum);
 	ae.insertDB(result);
 
-%>개의 WIFI정보를 정상적으로 저장하였습니다. </center></b>
+%>
+<b><center><% out.print(maxNum);%>
+개의 WIFI정보를 정상적으로 저장하였습니다. </center></b>
 <br>
 <center><a href="index.jsp">홈으로 가기</a></center>
 </body>

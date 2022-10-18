@@ -19,6 +19,7 @@ public class WifiInfo {
 	Double LNT;
 	String WORK_DTTM;
 	Double DISTANCE;
+	int ID;
 	
 //	/**
 //	 * @param x_SWIFI_MGR_NO
@@ -64,6 +65,12 @@ public class WifiInfo {
 //	}
 
 
+	public int getID() {
+		return ID;
+	}
+	public void setID(int iD) {
+		ID = iD;
+	}
 	public String getX_SWIFI_MGR_NO() {
 		return X_SWIFI_MGR_NO;
 	}
